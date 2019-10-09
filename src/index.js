@@ -15,7 +15,7 @@ import rootReducer from './reducers';
 import { setUser, clearUser } from "./actions";
 import Spinner from './Spinner';
 
-const store = createStore(rootReducer, composeWithDevTools);
+const store = createStore(rootReducer, composeWithDevTools());
 
 class Root extends React.Component {
     componentDidMount() {
@@ -52,7 +52,3 @@ ReactDOM.render(
         <RootWithAuth />
     </Router>
 </Provider>, document.getElementById('root'));
-
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
