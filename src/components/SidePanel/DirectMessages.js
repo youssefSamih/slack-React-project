@@ -23,7 +23,6 @@ class DirectMessages extends Component {
     addListeners = currentUserUid => {
       let loadedUsers = [];
       this.state.usersRef.on('child_added', snap => {
-        console.log(snap);
         if(currentUserUid !== snap.key) {
           let user = snap.val();
           user['uid'] = snap.key;
@@ -63,6 +62,7 @@ class DirectMessages extends Component {
         }
         return acc.concat(user);
       }, []);
+      this.setState({ users: updatedUsers });
     }
 
     isUserOnline = user => user.status === 'online';
