@@ -20,7 +20,9 @@ export default class Messages extends Component{
         searchLoading: false,
         searchResults: [],
         privateChannel: this.props.isPrivateChannel,
-        privateMessagesRef: firebase.database().ref('privateMessages')
+        privateMessagesRef: firebase.database().ref('privateMessages'),
+        isChannelStarred: false,
+        userRef: firebase.database().ref('users')
     };
 
     componentDidMount() {
@@ -28,12 +30,27 @@ export default class Messages extends Component{
 
       if(channel && user){
           this.addListeners(channel.id);
+          this.addUserStarsListener(channel.id, user.uid);
       }
-    }
+    };
 
     addListeners = channelId => {
         this.addMessageListener(channelId);
-    }
+    };
+
+    addUserStarsListener = (channelId, userId) => {
+        this.state.userRef
+            .child(userId)
+            .child('starred')
+            .once('value')
+            .then(data => {
+                if(data.val() !== null) {
+                    const channelIds = Object.keys(data.val());
+                    const prevStarred = channelIds.includes(channelId);
+                    this.setState({ isChannelStarred: prevStarred });
+                }
+            });
+    };
 
     addMessageListener = channelId => {
         let loadedMessages = [];
@@ -73,7 +90,7 @@ export default class Messages extends Component{
                 user={this.state.user}
             />
         ))
-    )
+    );
 
     isProgressBarVisible = percent => {
         if(percent > 0){
@@ -90,7 +107,7 @@ export default class Messages extends Component{
             searchTerm: event.target.value,
             searchLoading: true
         }, () => this.handleSearchMessages());
-    }
+    };
 
     handleSearchMessages = () => {
         const channelMessages = [...this.state.messages];
@@ -105,10 +122,42 @@ export default class Messages extends Component{
         setTimeout(() => {
            this.setState(() => this.setState({ searchLoading: false })) 
         }, 1000);
-    }
+    };
+
+    handleStar = () => {
+        this.setState(prevState => ({
+            isChannelStarred: !prevState.isChannelStarred
+        }), () => this.starChannel());
+    };
+
+    starChannel = () => {
+        if(this.state.isChannelStarred){
+            this.state.userRef
+                .child(`${this.state.user.uid}/starred`)
+                .update({
+                    [this.state.channel.id] : {
+                        name: this.state.channel.name,
+                        details: this.state.channel.details,
+                        createdBy: {
+                            name: this.state.channel.createdBy.name,
+                            avatar: this.state.channel.createdBy.avatar
+                        }
+                    }
+                })
+        } else {
+            this.state.userRef
+                .child(`${this.state.user.uid}/starred`)
+                .child(this.state.channel.id)
+                .remove(err => {
+                    if(err !== null){
+                        console.error(err);
+                    }
+                });
+        }
+    };
 
     render(){
-        const { messagesRef, channel, user, messages, numUniqueUsers, searchResults, searchTerm, searchLoading, privateChannel } = this.state
+        const { messagesRef, channel, user, messages, numUniqueUsers, searchResults, searchTerm, searchLoading, privateChannel, isChannelStarred } = this.state
         return(
             <React.Fragment>
                 <MessagesHeader
@@ -117,6 +166,8 @@ export default class Messages extends Component{
                     handleSearchChange={this.handleSearchChange}
                     searchLoading={searchLoading}
                     isPrivateChannel={privateChannel}
+                    handleStar={this.handleStar}
+                    isChannelStarred={isChannelStarred}
                 />
                 <Segment>
                     <Comment.Group className="messages">
@@ -133,5 +184,5 @@ export default class Messages extends Component{
                 />
             </React.Fragment>
         )
-    }
+    };
 }

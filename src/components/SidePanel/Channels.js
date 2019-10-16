@@ -176,7 +176,7 @@ class Channels extends Component {
         # { channel.name }
       </Menu.Item>
     ))
-  }
+  };
 
   isFormValid = ({ channelName, channelDetails }) => channelName && channelDetails;
 
