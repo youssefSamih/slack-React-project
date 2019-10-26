@@ -8,6 +8,7 @@ import MessageForm from './MessageForm';
 import firebase from '../../firebase';
 import Message from './Message';
 import Typing from "./Typing";
+import Skeleton from './Skeleton';
 
 class Messages extends Component{
     state = {
@@ -37,7 +38,18 @@ class Messages extends Component{
           this.addListeners(channel.id);
           this.addUserStarsListener(channel.id, user.uid);
       }
+      this.messagesEnd && this.scrollToBottom();
     };
+
+    componentDidUpdate() {
+        if(this.messagesEnd) {
+            this.scrollToBottom();
+        }
+    };
+
+    scrollToBottom = () => {
+        this.messagesEnd.scrollIntoView({ behavior: "smooth" });
+    }
 
     addListeners = channelId => {
         this.addMessageListener(channelId);
@@ -224,8 +236,19 @@ class Messages extends Component{
         }
     };
 
+    dispplayMessageSkeleton = loading => (
+        loading ? (
+            <React.Fragment>
+                {[...Array(10)].map((_, i) => (
+                    <Skeleton key={i} />
+                ))}
+            </React.Fragment>
+        ) : null
+    );
+
     render(){
-        const { messagesRef, channel, user, messages, numUniqueUsers, searchResults, searchTerm, searchLoading, privateChannel, isChannelStarred, typingUsers } = this.state
+        const { messagesRef, channel, user, messages, numUniqueUsers, searchResults, searchTerm, searchLoading, privateChannel, isChannelStarred, typingUsers, messagesLoading } = this.state;
+
         return(
             <React.Fragment>
                 <MessagesHeader
@@ -239,8 +262,10 @@ class Messages extends Component{
                 />
                 <Segment>
                     <Comment.Group className="messages">
+                        {this.dispplayMessageSkeleton(messagesLoading)}
                         { searchTerm ? this.displayMessages(searchResults) : this.displayMessages(messages)}
                         {this.displayTypingUsers(typingUsers)}
+                        <div ref={node => {this.messagesEnd = node}}></div>
                     </Comment.Group>
                 </Segment>
                 <MessageForm 
